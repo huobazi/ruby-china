@@ -4,7 +4,7 @@ else
   source 'https://ruby.taobao.org'
 end
 
-ruby '2.3.0'
+ruby '2.2.1'
 
 gem 'rails', '~> 4.2.5'
 gem 'sprockets'
@@ -38,10 +38,7 @@ gem 'mini_magick'
 gem 'rucaptcha'
 gem 'letter_avatar'
 
-# Mongoid 辅助插件
-gem 'mongoid', '5.0.0'
-gem 'mongoid_auto_increment_id'
-gem 'mongoid_rails_migrations'
+gem 'pg'
 
 # 用户系统
 gem 'devise', '~> 3.5.1'
@@ -51,9 +48,6 @@ gem 'devise-encryptable'
 # 分页
 gem 'will_paginate'
 
-# 搜索
-gem 'elasticsearch-model'
-gem 'elasticsearch-rails'
 
 # 三方平台 OAuth 验证登陆
 gem 'omniauth', '~> 1.2.2'
@@ -115,11 +109,7 @@ gem 'rack-utf8_sanitizer'
 # Mini profiler
 gem 'rack-mini-profiler', require: false
 
-# gem 'newrelic_rpm'
-# gem 'newrelic_moped'
-# gem 'newrelic-grape'
-
-gem 'oneapm_rpm'
+gem 'newrelic_rpm'
 
 group :development do
   gem 'derailed'
