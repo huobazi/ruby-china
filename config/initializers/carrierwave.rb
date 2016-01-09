@@ -28,12 +28,14 @@ CarrierWave.configure do |config|
     # http://stackoverflow.com/questions/7534341/rails-3-test-fixtures-with-carrierwave/25315883#25315883
     config.storage NullStorage
   else
-    config.storage = :upyun
+    config.storage = :qiniu
   end
-  # Do not remove previously file after new file uploaded
-  config.remove_previously_stored_files_after_update = false
-  config.upyun_username = Setting.upyun_username
-  config.upyun_password = Setting.upyun_password
-  config.upyun_bucket = Setting.upyun_bucket
-  config.upyun_bucket_host = Setting.upload_url
+
+  config.qiniu_access_key    = Setting.qiniu_access_key
+  config.qiniu_secret_key    = Setting.qiniu_secret_key
+  config.qiniu_bucket        = Setting.qiniu_bucket
+  config.qiniu_bucket_domain = Setting.qiniu_bucket_domain
+  config.qiniu_bucket_private= Setting.qiniu_bucket_private
+  config.qiniu_block_size    = Setting.qiniu_block_size
+  config.qiniu_protocol      = Setting.qiniu_protocol
 end

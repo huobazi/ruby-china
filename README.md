@@ -9,9 +9,8 @@ This is the source code of [Ruby China](http://ruby-china.org) website.
 * Ruby 2.3.0 +
 * Memcached 1.4 +
 * Redis 2.8 +
-* MongoDb 2.4.4 +
+* PostgeSQL 9.4+
 * ImageMagick 6.5+
-* Elasticsearch 2.0+
 
 ## Install in development
 
@@ -52,17 +51,7 @@ $ brew install elasticsearch
 ### Ubuntu
 
 ```bash
-$ sudo apt-get install memcached mongodb redis-server imagemagick ghostscript
-```
-
-Install Elasticsearch
-
-```bash
-wget -qO - https://packages.elastic.co/GPG-KEY-elasticsearch | sudo apt-key add -
-echo "deb http://packages.elastic.co/elasticsearch/2.x/debian stable main" | sudo tee -a /etc/apt/sources.list.d/elasticsearch-2.x.list
-sudo apt-get update && sudo apt-get install elasticsearch openjdk-7-jre-headless
-sudo update-alternatives --config java
-# 选择 java-7
+$ sudo apt-get install memcached postgresql redis-server imagemagick ghostscript
 ```
 
 ```bash
@@ -71,11 +60,10 @@ $ cd ruby-china
 $ ./bin/setup
 Checking Package Dependencies...
 --------------------------------------------------------------------------------
-MongoDB 2.0+                                                               [Yes]
+PostgeSQL 2.0+                                                             [Yes]
 Redis 2.0+                                                                 [Yes]
 Memcached 1.4+                                                             [Yes]
 ImageMagick 6.5+                                                           [Yes]
-Elasticsearch 2.0                                                          [Yes]
 --------------------------------------------------------------------------------
 
 Installing dependencies
@@ -85,9 +73,7 @@ The Gemfile's dependencies are satisfied
 
 Configure
 --------------------------------------------------------------------------------
-Your MongoDB host (default: 127.0.0.1:27017):
 Your Redis host (default: 127.0.0.1:6379):
-Your Elasticsearch host (default: 127.0.0.1:9200):
 --------------------------------------------------------------------------------
 
 Seed default data...                                                      [Done]
