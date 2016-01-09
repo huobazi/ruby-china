@@ -32,7 +32,7 @@ gem 'ruby-prof'
 
 # 上传组件
 gem 'carrierwave', '~> 0.10.0'
-gem 'carrierwave-upyun'
+gem 'carrierwave-qiniu', github: 'huobazi/carrierwave-qiniu'
 gem 'mini_magick'
 
 gem 'rucaptcha'
