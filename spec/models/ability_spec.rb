@@ -2,6 +2,9 @@ require 'rails_helper'
 require 'cancan/matchers'
 
 describe Ability, type: :model do
+  before do
+    PostgreSearch.stub(:index_searchable).and_return(true)
+  end
   subject { ability }
 
   context 'Admin manage all' do

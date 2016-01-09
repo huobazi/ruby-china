@@ -49,7 +49,7 @@ class User < ActiveRecord::Base
 
   validates :login, format: { with: ALLOW_LOGIN_CHARS_REGEXP, message: '只允许数字、大小写字母和下划线' },
                     length: { in: 3..20 }, presence: true,
-                    uniqueness: { case_sensitive: false }
+                    uniqueness: { case_sensitive: true}
 
 #  has_and_belongs_to_many :following, class_name: 'User', inverse_of: :followers
 #  has_and_belongs_to_many :followers, class_name: 'User', inverse_of: :following
@@ -179,10 +179,10 @@ class User < ActiveRecord::Base
   def store_location
     if self.location_changed?
       if !location.blank?
-        old_location = Location.find_by_name(location_was)
-        old_location.decrement(:users_count) unless old_location.blank?
-        location = Location.find_or_create_by_name(self.location)
-        location.increment(:users_count)
+        old_location = Location.find_by(name: self.location_was)
+        old_location.decrement!(:users_count) unless old_location.blank?
+        location = Location.find_or_create_by(name: self.location)
+        location.increment!(:users_count)
         self.location_id = (location.blank? ? nil : location.id)
       else
         self.location_id = nil
@@ -212,7 +212,8 @@ class User < ActiveRecord::Base
   end
 
   def self.find_login(slug)
-    where(login: slug).first
+    fail ActiveRecord::RecordNotFound.new(slug: slug) unless slug =~ ALLOW_LOGIN_CHARS_REGEXP
+    where(login: slug.downcase).first || fail(ActiveRecord::RecordNotFound.new(slug: slug))
   end
 
   def bind?(provider)
@@ -254,7 +255,7 @@ class User < ActiveRecord::Base
     return if topic.blank?
     return if self.topic_read?(topic)
 
-    notifications.unread.any_of({ mentionable_type: 'Topic', mentionable_id: topic.id },
+    notifications.unread.where.any_of({ mentionable_type: 'Topic', mentionable_id: topic.id },
                                 { mentionable_type: 'Reply', mentionable_id: topic.reply_ids },
                                 reply_id: topic.reply_ids).update_all(read: true)
 
@@ -267,8 +268,8 @@ class User < ActiveRecord::Base
   def like(likeable)
     return false if likeable.blank?
     return false if liked?(likeable)
-    likeable.push(liked_user_ids: id)
-    likeable.increment(:likes_count)
+    likeable.update_attributes liked_user_ids: likeable.liked_user_ids | [ self.id ]
+    likeable.increment!(:likes_count)
     likeable.touch
   end
 
@@ -277,8 +278,8 @@ class User < ActiveRecord::Base
     return false if likeable.blank?
     return false unless liked?(likeable)
     return false if likeable.user_id == self.id
-    likeable.pull(liked_user_ids: id)
-    likeable.decrement(:likes_count)
+    likeable.update_attributes liked_user_ids: likeable.liked_user_ids - [ self.id ]
+    likeable.decrement!(:likes_count)
     likeable.touch
   end
 
@@ -292,7 +293,7 @@ class User < ActiveRecord::Base
     return false if topic_id.blank?
     topic_id = topic_id.to_i
     return false if favorited_topic?(topic_id)
-    update_attributes favorite_topic_ids: self.favorite_topic_ids + [ topic_id ]
+    update_attributes favorite_topic_ids: self.favorite_topic_ids | [ topic_id ]
     true
   end
 
@@ -388,7 +389,7 @@ class User < ActiveRecord::Base
   def block_node(node_id)
     new_node_id = node_id.to_i
     return false if blocked_node_ids.include?(new_node_id)
-    update_attributes blocked_node_ids: self.blocked_node_ids + [ new_node_id ]
+    update_attributes blocked_node_ids: self.blocked_node_ids | [ new_node_id ]
   end
 
   def unblock_node(node_id)
@@ -408,7 +409,7 @@ class User < ActiveRecord::Base
   def block_user(user_id)
     user_id = user_id.to_i
     return false if self.blocked_user?(user_id)
-    update_attributes blocked_user_ids: self.blocked_user_ids + [ user_id ]
+    update_attributes blocked_user_ids: self.blocked_user_ids | [ user_id ]
   end
 
   def unblock_user(user_id)
@@ -423,8 +424,8 @@ class User < ActiveRecord::Base
 
   def follow_user(user)
     return false if user.blank?
-    update_attributes following_ids: self.following_ids + [ user.id ]
-    user.update_attributes follower_ids: user.follower_ids + [ self.id ]
+    update_attributes following_ids: self.following_ids | [ user.id ]
+    user.update_attributes follower_ids: user.follower_ids | [ self.id ]
     Notification::Follow.notify(user: user, follower: self)
   end
 

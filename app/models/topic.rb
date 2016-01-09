@@ -13,6 +13,7 @@ class Topic < ActiveRecord::Base
   include Likeable
   include MarkdownBody
   include SoftDelete
+  include Mentionable
 
   # 临时存储检测用户是否读过的结果
   attr_accessor :read_state, :admin_editing
@@ -111,13 +112,13 @@ class Topic < ActiveRecord::Base
   def push_follower(uid)
     return false if uid == user_id
     return false if followed?(uid)
-    push(follower_ids: uid)
+    update_attributes follower_ids: self.follower_ids | [ uid ]
     true
   end
 
   def pull_follower(uid)
     return false if uid == user_id
-    pull(follower_ids: uid)
+    update_attributes follower_ids: self.follower_ids - [ uid ]
     true
   end
 

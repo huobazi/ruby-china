@@ -167,7 +167,7 @@ ActiveRecord::Schema.define(version: 20160109171447) do
     t.integer  "user_id",                        null: false
     t.boolean  "locked",         default: false
     t.integer  "version",        default: 0,     null: false
-    t.integer  "editor_ids",                     null: false, array: true
+    t.integer  "editor_ids",     default: [],    null: false, array: true
     t.integer  "word_count",     default: 0,     null: false
     t.integer  "changes_cout",   default: 1,     null: false
     t.integer  "comments_count", default: 0,     null: false
@@ -242,10 +242,11 @@ ActiveRecord::Schema.define(version: 20160109171447) do
   add_index "site_nodes", ["sort"], name: "index_site_nodes_on_sort", using: :btree
 
   create_table "sites", force: :cascade do |t|
+    t.integer  "user_id"
     t.integer  "site_node_id"
     t.string   "name",         null: false
     t.string   "url",          null: false
-    t.string   "desc",         null: false
+    t.string   "desc"
     t.datetime "deleted_at"
     t.datetime "created_at"
     t.datetime "updated_at"
