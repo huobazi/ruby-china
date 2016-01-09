@@ -424,6 +424,7 @@ class User < ActiveRecord::Base
   def follow_user(user)
     return false if user.blank?
     update_attributes following_ids: self.following_ids + [ user.id ]
+    user.update_attributes follower_ids: user.follower_ids + [ self.id ]
     Notification::Follow.notify(user: user, follower: self)
   end
 
@@ -438,6 +439,7 @@ class User < ActiveRecord::Base
   def unfollow_user(user)
     return false if user.blank?
     update_attributes following_ids: self.following_ids - [ user.id ]
+    user.update_attributes follower_ids: user.follower_ids - [ self.id ]
   end
 
   def favorites_count
