@@ -6,9 +6,10 @@ class Reply < ActiveRecord::Base
 
   UPVOTES = %w(+1 :+1: :thumbsup: :plus1: 👍 👍🏻 👍🏼 👍🏽 👍🏾 👍🏿)
 
-  belongs_to :user, inverse_of: :replies, counter_cache: true
-  belongs_to :topic, inverse_of: :replies, touch: true, counter_cache: true
+  belongs_to :user, counter_cache: true
+  belongs_to :topic, touch: true, counter_cache: true
   has_many :notifications, class_name: 'Notification::Base', dependent: :destroy
+  has_one :postgre_search, as: :searchable
 
   delegate :title, to: :topic, prefix: true, allow_nil: true
   delegate :login, to: :user, prefix: true, allow_nil: true

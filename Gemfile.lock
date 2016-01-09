@@ -341,6 +341,7 @@ GEM
     rest-client (1.7.3)
       mime-types (>= 1.16, < 3.0)
       netrc (~> 0.7)
+    rmmseg-cpp (0.2.9)
     rouge (1.8.0)
     rspec-core (3.4.1)
       rspec-support (~> 3.4.0)
@@ -491,6 +492,7 @@ DEPENDENCIES
   redis (~> 3.2.1)
   redis-namespace (~> 1.5.1)
   redis-objects (= 1.1.0)
+  rmmseg-cpp
   rouge (~> 1.8.0)
   rspec-rails (~> 3.4)
   rubocop

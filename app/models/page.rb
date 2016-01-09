@@ -16,6 +16,17 @@ class Page < ActiveRecord::Base
   validates :slug, uniqueness: true
 
 
+  after_save :update_index
+  def update_index
+    if self.slug_changed? || self.title_changed? || self.body_changed?
+      SearchIndexer.perform_later('page', self.id)
+    end
+  end
+
+  def to_search_data
+    "#{self.slug} #{self.title} #{PostgreSearch.scrub_html_for_search self.body_html}"
+  end
+
   before_save :append_editor
   def append_editor
     unless editor_ids.include?(user_id.to_i)
@@ -31,7 +42,7 @@ class Page < ActiveRecord::Base
     return true unless version_enable
     # 只有 body, title, slug 更改了才更新版本
     if self.body_changed? || self.title_changed? || self.slug_changed?
-      inc(version: 1)
+      increment(:version)
       PageVersion.create(user_id: user_id,
                          page_id: id,
                          desc: change_desc,

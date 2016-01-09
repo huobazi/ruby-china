@@ -22,6 +22,8 @@ class User < ActiveRecord::Base
   has_many :photos
   has_many :oauth_applications, class_name: 'Doorkeeper::Application', as: :owner
 
+  has_one :postgre_search, as: :searchable
+
   def read_notifications(notifications)
     unread_ids = notifications.find_all { |notification| !notification.read? }.map(&:id)
     if unread_ids.any?
@@ -57,6 +59,10 @@ class User < ActiveRecord::Base
     select(:id, :name, :login, :email, :email_md5, :email_public, :avatar, :verified, :state,
          :tagline, :github, :website, :location, :location_id, :twitter, :co)
   }
+
+  def to_search_data
+    "#{self.login} #{self.name}"
+  end
 
   def following
     User.where(id: self.following_ids)
@@ -174,13 +180,21 @@ class User < ActiveRecord::Base
     if self.location_changed?
       if !location.blank?
         old_location = Location.find_by_name(location_was)
-        old_location.inc(users_count: -1) unless old_location.blank?
+        old_location.decrement(:users_count) unless old_location.blank?
         location = Location.find_or_create_by_name(self.location)
-        location.inc(users_count: 1)
+        location.increment(:users_count)
         self.location_id = (location.blank? ? nil : location.id)
       else
         self.location_id = nil
       end
+    end
+  end
+
+
+  after_save :update_index
+  def update_index
+    if self.name_changed?
+      SearchIndexer.perform_later('user', self.id)
     end
   end
 
@@ -254,7 +268,7 @@ class User < ActiveRecord::Base
     return false if likeable.blank?
     return false if liked?(likeable)
     likeable.push(liked_user_ids: id)
-    likeable.inc(likes_count: 1)
+    likeable.increment(:likes_count)
     likeable.touch
   end
 
@@ -264,7 +278,7 @@ class User < ActiveRecord::Base
     return false unless liked?(likeable)
     return false if likeable.user_id == self.id
     likeable.pull(liked_user_ids: id)
-    likeable.inc(likes_count: -1)
+    likeable.decrement(:likes_count)
     likeable.touch
   end
 
@@ -278,7 +292,7 @@ class User < ActiveRecord::Base
     return false if topic_id.blank?
     topic_id = topic_id.to_i
     return false if favorited_topic?(topic_id)
-    push(favorite_topic_ids: topic_id)
+    update_attributes favorite_topic_ids: self.favorite_topic_ids + [ topic_id ]
     true
   end
 
@@ -286,7 +300,7 @@ class User < ActiveRecord::Base
   def unfavorite_topic(topic_id)
     return false if topic_id.blank?
     topic_id = topic_id.to_i
-    pull(favorite_topic_ids: topic_id)
+    update_attributes favorite_topic_ids: self.favorite_topic_ids - [ topic_id ]
     true
   end
 
@@ -374,12 +388,12 @@ class User < ActiveRecord::Base
   def block_node(node_id)
     new_node_id = node_id.to_i
     return false if blocked_node_ids.include?(new_node_id)
-    push(blocked_node_ids: new_node_id)
+    update_attributes blocked_node_ids: self.blocked_node_ids + [ new_node_id ]
   end
 
   def unblock_node(node_id)
     new_node_id = node_id.to_i
-    pull(blocked_node_ids: new_node_id)
+    update_attributes blocked_node_ids: self.blocked_node_ids - [ new_node_id ]
   end
 
   def blocked_users?
@@ -394,12 +408,12 @@ class User < ActiveRecord::Base
   def block_user(user_id)
     user_id = user_id.to_i
     return false if self.blocked_user?(user_id)
-    push(blocked_user_ids: user_id)
+    update_attributes blocked_user_ids: self.blocked_user_ids + [ user_id ]
   end
 
   def unblock_user(user_id)
     user_id = user_id.to_i
-    pull(blocked_user_ids: user_id)
+    update_attributes blocked_user_ids: self.blocked_user_ids - [ user_id ]
   end
 
   def followed?(user)
@@ -409,7 +423,7 @@ class User < ActiveRecord::Base
 
   def follow_user(user)
     return false if user.blank?
-    following.push(user)
+    update_attributes following_ids: self.following_ids + [ user.id ]
     Notification::Follow.notify(user: user, follower: self)
   end
 
@@ -423,7 +437,7 @@ class User < ActiveRecord::Base
 
   def unfollow_user(user)
     return false if user.blank?
-    following.delete(user)
+    update_attributes following_ids: self.following_ids - [ user.id ]
   end
 
   def favorites_count

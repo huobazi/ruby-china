@@ -11,7 +11,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20160109040800) do
+ActiveRecord::Schema.define(version: 20160109094906) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -164,7 +164,7 @@ ActiveRecord::Schema.define(version: 20160109040800) do
     t.integer  "user_id",                        null: false
     t.boolean  "locked",         default: false
     t.integer  "version",        default: 0,     null: false
-    t.integer  "editor_ids",     default: [],    null: false, array: true
+    t.integer  "editor_ids",                     null: false, array: true
     t.integer  "word_count",     default: 0,     null: false
     t.integer  "changes_cout",   default: 1,     null: false
     t.integer  "comments_count", default: 0,     null: false
@@ -182,6 +182,17 @@ ActiveRecord::Schema.define(version: 20160109040800) do
     t.datetime "created_at"
     t.datetime "updated_at"
   end
+
+  create_table "postgre_searches", force: :cascade do |t|
+    t.integer  "searchable_id"
+    t.string   "searchable_type"
+    t.tsvector "search_data"
+    t.datetime "created_at",      null: false
+    t.datetime "updated_at",      null: false
+  end
+
+  add_index "postgre_searches", ["search_data"], name: "index_postgre_searches_on_search_data", using: :gin
+  add_index "postgre_searches", ["searchable_type", "searchable_id"], name: "index_postgre_searches_on_searchable_type_and_searchable_id", using: :btree
 
   create_table "replies", force: :cascade do |t|
     t.integer  "user_id",                         null: false
@@ -228,7 +239,6 @@ ActiveRecord::Schema.define(version: 20160109040800) do
   add_index "site_nodes", ["sort"], name: "index_site_nodes_on_sort", using: :btree
 
   create_table "sites", force: :cascade do |t|
-    t.integer  "user_id",      null: false
     t.integer  "site_node_id"
     t.string   "name",         null: false
     t.string   "url",          null: false
@@ -242,10 +252,10 @@ ActiveRecord::Schema.define(version: 20160109040800) do
   add_index "sites", ["url"], name: "index_sites_on_url", using: :btree
 
   create_table "topics", force: :cascade do |t|
-    t.integer  "user_id",                            null: false
-    t.integer  "node_id",                            null: false
-    t.string   "title",                              null: false
-    t.text     "body",                               null: false
+    t.integer  "user_id",                               null: false
+    t.integer  "node_id",                               null: false
+    t.string   "title",                                 null: false
+    t.text     "body",                                  null: false
     t.text     "body_html"
     t.integer  "last_reply_id"
     t.integer  "last_reply_user_id"
@@ -253,15 +263,15 @@ ActiveRecord::Schema.define(version: 20160109040800) do
     t.string   "node_name"
     t.string   "who_deleted"
     t.integer  "last_active_mark"
-    t.boolean  "lock_node",          default: false
+    t.boolean  "lock_node",             default: false
     t.datetime "suggested_at"
-    t.integer  "excellent",          default: 0
+    t.integer  "excellent",             default: 0
     t.datetime "replied_at"
-    t.integer  "replies_count",      default: 0,     null: false
-    t.integer  "likes_count",        default: 0
-    t.integer  "follower_ids",       default: [],                 array: true
-    t.integer  "liked_user_ids",     default: [],                 array: true
-    t.integer  "mentioned_user_ids", default: [],                 array: true
+    t.integer  "replies_count",         default: 0,     null: false
+    t.integer  "likes_count",           default: 0
+    t.integer  "follower_ids",          default: [],                 array: true
+    t.integer  "liked_user_ids",        default: [],                 array: true
+    t.integer  "mentioned_user_ids",    default: [],                 array: true
     t.datetime "deleted_at"
     t.datetime "created_at"
     t.datetime "updated_at"

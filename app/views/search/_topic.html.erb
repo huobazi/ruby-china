@@ -1,5 +1,5 @@
 <%
-title = hit.highlight.title.try(:first) || item.title
+title = item.title
 %>
 <div class="result">
   <div class="title"><%= link_to highlight(title), item %></div>
@@ -7,5 +7,5 @@ title = hit.highlight.title.try(:first) || item.title
     <span class="url"><%= link_to polymorphic_url(item), item %></span>
     <span class="date" title="Last Updated At"><%= item.updated_at.to_date %></span>
   </div>
-  <div class="desc"><%= highlight(hit.highlight.body.try(:first)) %></div>
+  <div class="desc"><%= highlight(item.body_html) %></div>
 </div>

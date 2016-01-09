@@ -40,6 +40,7 @@ gem 'letter_avatar'
 
 gem 'pg'
 gem 'activerecord_any_of'
+gem 'rmmseg-cpp', require: false
 
 # 用户系统
 gem 'devise', '~> 3.5.1'
