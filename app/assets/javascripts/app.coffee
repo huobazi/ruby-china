@@ -21,6 +21,7 @@
 #= require topics
 #= require pages
 #= require notes
+#= require highlight
 #= require turbolinks
 #= require google_analytics
 #= require_self

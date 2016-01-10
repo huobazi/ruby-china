@@ -1,4 +1,4 @@
-<div class="search-results panel panel-default">
+<div class="search-results panel panel-default" id="search_results">
   <div class="panel-heading clearfix">
     关于 “<%= params[:q] %>” 的搜索结果, 共 <%= @result.count %> 条
   </div>
@@ -11,5 +11,9 @@
   </div>
 
   <div class="panel-footer">
+    <%= will_paginate @result %>
   </div>
+  <script>
+    $("#search_results").highlight('<%= params[:q]%>');
+  </script>
 </div>

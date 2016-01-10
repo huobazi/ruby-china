@@ -92,6 +92,12 @@ class Topic < ActiveRecord::Base
     end
   end
 
+  after_save do
+    if self.body_changed? || self.title_changed?
+      SearchIndexer.perform_later('topic', self.id)
+    end
+  end
+
   before_create :init_last_active_mark_on_create
   def init_last_active_mark_on_create
     self.last_active_mark = Time.now.to_i
