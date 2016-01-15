@@ -1,53 +1,89 @@
-require 'bundler/capistrano'
-require 'capistrano/sidekiq'
-require 'rvm/capistrano'
-require 'capistrano-unicorn'
+require 'mina/bundler'
+require 'mina/rails'
+require 'mina/git'
+require 'mina/rbenv'
+require 'mina/puma'
+require 'mina_sidekiq/tasks'
 
-default_run_options[:pty] = true
+set :domain, '123.56.126.53' #'community.readface.cn'
+set :deploy_to, '/var/www/community.readface.cn'
+set :repository,  'git://github.com/rivid/ruby-china.git'
+set :branch, 'postgresql'
 
-set :rvm_ruby_string, 'ruby-2.3.0'
-set :rvm_type, :user
-set :application, 'ruby-china'
-set :repository,  'git://github.com/ruby-china/ruby-china.git'
-set :branch, 'master'
-set :scm, :git
-set :user, 'ruby'
-set :deploy_to, "/data/www/#{application}"
-set :runner, 'ruby'
-# set :deploy_via, :remote_cache
-set :git_shallow_clone, 1
-set :unicorn_pid, "#{current_path}/tmp/pids/unicorn.pid"
+set :deploy_environment, 'production'
+set :code_revision, `git log --pretty=format:%h -n1`.strip
 
-role :web, 'ruby-china.org'
-role :app, 'ruby-china.org'
-role :db,  'ruby-china.org', primary: true
-role :queue, 'ruby-china.org'
+set :rbenv_path, '/home/ubuntu/.rbenv'
+set :bundle_gemfile,  "#{deploy_to}/current/Gemfile"
 
-task :link_shared, roles: :web do
-  run "mkdir -p #{shared_path}/log"
-  run "mkdir -p #{shared_path}/pids"
-  run "mkdir -p #{shared_path}/assets"
-  run "mkdir -p #{shared_path}/system"
-  run "mkdir -p #{shared_path}/cache"
-  run "ln -sf #{shared_path}/system #{current_path}/public/system"
-  run "ln -sf #{shared_path}/assets #{current_path}/public/assets"
-  run "ln -sf #{shared_path}/config/*.yml #{current_path}/config/"
-  run "ln -sf #{shared_path}/config/initializers/secret_token.rb #{current_path}/config/initializers"
-  run "ln -sf #{shared_path}/pids #{current_path}/tmp/"
-  run "ln -sf #{shared_path}/cache #{current_path}/tmp/"
+
+set :shared_paths, ['config/database.yml', 'config/secrets.yml', 'log', 'public/uploads', 'config/puma.rb']
+
+set :user, 'ubuntu'
+set :shared_path, 'shared'
+
+# This task is the environment that is loaded for most commands, such as
+# `mina deploy` or `mina rake`.
+task :environment do
+  # If you're using rbenv, use this to load the rbenv environment.
+  # Be sure to commit your .ruby-version or .rbenv-version to your repository.
+  queue %{export RBENV_ROOT=#{rbenv_path}}
+  queue %{export RAKE_ENV=#{deploy_environment}}
+  queue %{export RAILS_ENV=#{deploy_environment}}
+  queue %{export RAILS_CACHE_ID=#{code_revision}}
+  invoke :'rbenv:load'
 end
 
-task :compile_assets, roles: :web do
-  run "cd #{current_path}; RAILS_ENV=production bundle exec rake assets:precompile"
-  run "cd #{current_path}; RAILS_ENV=production bundle exec rake assets:cdn"
+# Put any custom mkdir's in here for when `mina setup` is ran.
+# For Rails apps, we'll make some of the shared paths that are shared between
+# all releases.
+task :setup => :environment do
+  queue! %[mkdir -p "#{deploy_to}/shared/tmp/sockets"]
+  queue! %[chmod g+rx,u+rwx "#{deploy_to}/shared/tmp/sockets"]
+
+  queue! %[mkdir -p "#{deploy_to}/shared/tmp/pids"]
+  queue! %[chmod g+rx,u+rwx "#{deploy_to}/shared/tmp/pids"]
+
+  queue! %[mkdir -p "#{deploy_to}/#{shared_path}/log"]
+  queue! %[chmod g+rx,u+rwx "#{deploy_to}/#{shared_path}/log"]
+
+  queue! %[mkdir -p "#{deploy_to}/#{shared_path}/config"]
+  queue! %[chmod g+rx,u+rwx "#{deploy_to}/#{shared_path}/config"]
+
+  queue! %[touch "#{deploy_to}/#{shared_path}/config/database.yml"]
+  queue! %[touch "#{deploy_to}/#{shared_path}/config/secrets.yml"]
+  queue  %[echo "-----> Be sure to edit '#{deploy_to}/#{shared_path}/config/database.yml' and 'secrets.yml'."]
 end
 
-task :migrate_db, roles: :web do
-  run "cd #{current_path}; RAILS_ENV=production bundle exec rake db:migrate"
-  # run "cd #{current_path}; RAILS_ENV=production bundle exec rake db:mongoid:create_indexes"
+desc "Deploys the current version to the server."
+task :deploy => :environment do
+  queue  %[echo "-----> Server: #{domain}."]
+  queue  %[echo "-----> Path: #{deploy_to}."]
+  queue  %[echo "-----> Environment: #{deploy_environment}."]
+  queue  %[echo "-----> Branch: #{branch}."]
+  to :before_hook do
+    # Put things to run locally before ssh
+  end
+
+  deploy do
+    # Put things that will set up an empty directory into a fully set-up
+    # instance of your project.
+    invoke :'git:clone'
+    invoke :'deploy:link_shared_paths'
+    invoke :'bundle:install'
+    invoke :'rails:db_migrate'
+    invoke :'rails:assets_precompile'
+    invoke :'cdn:upload_assets'
+    invoke :'deploy:cleanup'
+
+    to :launch do
+      invoke :'puma:restart'
+    end
+  end
 end
 
-after 'deploy:finalize_update', 'deploy:symlink', :link_shared, :migrate_db, :compile_assets
-after 'deploy:restart', 'unicorn:restart'
-after 'deploy:start', 'unicorn:start'
-after 'deploy:stop', 'unicorn:stop'
+namespace :cdn do
+  task :upload_assets => :environment do
+    queue "cd #{current_path}; RAILS_ENV=production bundle exec rake assets:cdn"
+  end
+end

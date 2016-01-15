@@ -100,7 +100,7 @@ gem 'postmark-rails', '0.4.1'
 gem 'kgio'
 gem 'dalli', '2.7.4'
 
-gem 'unicorn', '5.0.0'
+gem 'puma'
 
 gem 'parallel'
 
@@ -118,10 +118,8 @@ group :development do
 end
 
 group :development, :test do
-  gem 'capistrano', '2.9.0', require: false
-  gem 'capistrano-unicorn'
-  gem 'rvm-capistrano', require: false
-  gem 'capistrano-sidekiq'
+  gem 'mina-puma', require: false
+  gem 'mina-sidekiq', require: false
 
   gem 'rubocop'
   gem 'rspec-rails', '~> 3.4'
@@ -134,8 +132,6 @@ group :development, :test do
 
   gem 'colorize'
   gem 'letter_opener'
-
-  gem 'puma', '~> 2.14.0'
 
   gem 'byebug'
   # Better Errors
