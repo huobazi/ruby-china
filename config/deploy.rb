@@ -5,7 +5,7 @@ require 'mina/rbenv'
 require 'mina/puma'
 require 'mina_sidekiq/tasks'
 
-set :domain, '123.56.126.53' #'community.readface.cn'
+set :domain, '121.42.141.249' #'community.readface.cn'
 set :deploy_to, '/var/www/community.readface.cn'
 set :repository,  'git://github.com/rivid/ruby-china.git'
 set :branch, 'postgresql'

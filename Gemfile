@@ -4,7 +4,7 @@ else
   source 'https://ruby.taobao.org'
 end
 
-ruby '2.2.1'
+#ruby '2.2.1'
 
 gem 'rails', '~> 4.2.5'
 gem 'sprockets'
