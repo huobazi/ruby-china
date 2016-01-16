@@ -17,7 +17,9 @@ set :rbenv_path, '/home/ubuntu/.rbenv'
 set :bundle_gemfile,  "#{deploy_to}/current/Gemfile"
 
 
-set :shared_paths, ['config/database.yml', 'config/secrets.yml', 'log', 'public/uploads', 'config/puma.rb']
+set :shared_paths, ['config/database.yml', 'config/config.yml',
+ 'config/secrets.yml', 'log', 'public/uploads',
+ 'config/redis.yml', 'config/puma.rb']
 
 set :user, 'ubuntu'
 set :shared_path, 'shared'
@@ -73,7 +75,7 @@ task :deploy => :environment do
     invoke :'bundle:install'
     invoke :'rails:db_migrate'
     invoke :'rails:assets_precompile'
-    invoke :'cdn:upload_assets'
+    # invoke :'cdn:upload_assets'
     invoke :'deploy:cleanup'
 
     to :launch do
