@@ -14,7 +14,6 @@ set :deploy_environment, 'production'
 set :code_revision, `git log --pretty=format:%h -n1`.strip
 
 set :rbenv_path, '/home/ubuntu/.rbenv'
-set :current_path, "#{deploy_to}/current"
 set :bundle_gemfile,  "#{deploy_to}/current/Gemfile"
 
 
@@ -87,6 +86,6 @@ end
 
 namespace :cdn do
   task :upload_assets => :environment do
-    queue "cd #{current_path}; RAILS_ENV=production bundle exec rake assets:cdn"
+    queue "cd #{deploy_to}/current; RAILS_ENV=production bundle exec rake assets:cdn"
   end
 end

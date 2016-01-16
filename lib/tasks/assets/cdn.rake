@@ -11,7 +11,7 @@ namespace :assets do
     uptoken = Qiniu::Auth.generate_uptoken(put_policy)
     Dir.glob("#{Rails.root}/public/assets/**/*").each do |asset|
       next if File.directory?(asset)
-      asset =~ /public(\/assets.*$)/
+      asset =~ /public\/(assets.*$)/
       filename = $1
       key = filename
       code, result, response_headers = Qiniu::Storage.upload_with_put_policy(
