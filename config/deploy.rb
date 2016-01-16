@@ -14,6 +14,7 @@ set :deploy_environment, 'production'
 set :code_revision, `git log --pretty=format:%h -n1`.strip
 
 set :rbenv_path, '/home/ubuntu/.rbenv'
+set :current_path, "#{deploy_to}/current"
 set :bundle_gemfile,  "#{deploy_to}/current/Gemfile"
 
 
